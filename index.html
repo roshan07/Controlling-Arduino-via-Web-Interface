@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="style.css">
+    <link type="text/css" rel="stylesheet" href="//pubnub.github.io/eon/v/eon/1.0.0/eon.css" />
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Arduino Control Panel</h1>
+    </div>
+
+    <div class="controlPanel">
+        <button id="red">TURN ON LEDS</button>
+        <button id="off">TURN OFF LEDS</button>
+        <br>
+        <input type="number" name="integer" id="num" value="0" min="0" max="9">
+        <button id="int" onclick="getNumber()">SUBMIT INT</button>
+        <br><br>
+        <label id="result"></label>
+    </div>
+    <br><br>
+    <div class="header">
+        <h1>Live LDR Sensor Data Reading Chart</h1>
+    </div>
+
+    <div id="chart"></div>
+    <br>
+    <div class="header">
+        <h3>Developed By: Purna Baral</h3>
+    </div>
+
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.21.7.js"></script>
+    <script src="//pubnub.github.io/eon/v/eon/1.0.0/eon.js"></script>
+    <!-- Instantiate PubNub -->
+    <script type="text/javascript">
+        var pubnub = new PubNub({
+            publishKey: 'pub-c-cb9f9ce1-9c09-45f8-9de5-6bc8a741c305',
+            subscribeKey: 'sub-c-0615df70-6d28-11e9-a1d6-2a8c316da507'
+        });
+
+        var channel = 'arduinoweb';
+        pubnub.subscribe({
+            channels: [channel]
+        });
+
+        var red = document.getElementById('red');
+        var off = document.getElementById('off');
+
+        var blinkState = true;
+
+        //for button on
+        red.addEventListener('click', function (e) {
+            pubnub.publish({
+                channel: channel,
+                message: { buttonColor: "red" }
+                /* callback: function (m) {
+                    blinkState = !blinkState;
+                    red.textContent = blinkState ? "Blink LED" : "Stop LED";
+                } */
+            });
+            console.log('button on clicked');
+        });
+        //for button off
+        off.addEventListener('click', function (e) {
+            pubnub.publish({
+                channel: channel,
+                message: { buttonColor: "off" }
+            });
+            console.log('button off clicked');
+        });
+        //sending int inputs from input field
+        function getNumber() {
+            var number = document.getElementById('num').value;
+            document.getElementById('result').innerHTML = number;
+            pubnub.publish({
+                channel: channel,
+                message: { buttonColor: number }
+            });
+            console.log('button num clicked');
+        }
+
+        //for live chart
+        var light = eon.chart({
+            pubnub: pubnub,
+            channels: [channel],
+            generate: {
+                bindto: '#chart'
+            },
+            transform: function (m) {
+                return {
+                    eon: {
+                        light: m.light
+                    }
+                }
+            }
+        });
+
+    </script>
+</body>
+
+</html>
